@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useActiveCompany, useStore, Employee, Schedule, useCurrentUser } from "@/lib/store";
+import { useActiveCompany, useStore, Employee, Schedule, useCurrentUser, TimeEntry, Vacation } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, MoreHorizontal, UserCog, Mail } from "lucide-react";
+import { Plus, Search, MoreHorizontal, UserCog, Mail, Trash2, UserX, AlertTriangle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,14 +21,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Employees() {
   const { currentUser } = useCurrentUser();
   const { activeCompany } = useActiveCompany();
   const [employees, setEmployees] = useStore<Employee[]>('employees');
   const [schedules] = useStore<Schedule[]>('schedules');
+  const [entries, setEntries] = useStore<TimeEntry[]>('entries');
+  const [vacations, setVacations] = useStore<Vacation[]>('vacations');
+  const { toast } = useToast();
+  
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [employeeToManage, setEmployeeToManage] = useState<Employee | null>(null);
 
   const companyEmployees = employees?.filter(e => e.companyId === activeCompany?.id) || [];
   
@@ -61,6 +67,19 @@ export default function Employees() {
     setEmployees([...(employees || []), emp]);
     setIsDialogOpen(false);
     setNewEmp({name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee'});
+    toast({ title: "Empleado añadido", description: "El empleado ha sido registrado correctamente." });
+  };
+
+  const handleDeactivate = (id: string) => {
+    setEmployees(employees.map(e => e.id === id ? { ...e, active: false } : e));
+    toast({ title: "Empleado desactivado", description: "El empleado ya no tiene acceso, pero su historial se conserva." });
+  };
+
+  const handleDelete = (id: string) => {
+    setEmployees(employees.filter(e => e.id !== id));
+    setEntries(entries.filter(e => e.employeeId !== id));
+    setVacations(vacations.filter(v => v.employeeId !== id));
+    toast({ title: "Empleado eliminado", description: "Se han borrado permanentemente todos sus datos asociados.", variant: "destructive" });
   };
 
   return (
@@ -177,9 +196,11 @@ export default function Employees() {
                     </TableCell>
                     {isSupervisor && (
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon">
-                          <UserCog className="w-4 h-4 text-muted-foreground" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => setEmployeeToManage(emp)}>
+                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-600" />
+                          </Button>
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>
@@ -189,6 +210,63 @@ export default function Employees() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!employeeToManage} onOpenChange={(open) => !open && setEmployeeToManage(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Gestionar Empleado</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-secondary/30 rounded text-center mb-2 font-medium">
+              {employeeToManage?.name}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Elige cómo deseas proceder con este empleado. Puedes desactivarlo para bloquear su acceso manteniendo su histórico legal, o eliminarlo completamente.
+            </p>
+            
+            <div className="flex flex-col gap-4 mt-4">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto p-4 flex flex-col items-start gap-2 border-primary/20 hover:border-primary/50 hover:bg-primary/5"
+                onClick={() => {
+                  if (employeeToManage) {
+                    handleDeactivate(employeeToManage.id);
+                    setEmployeeToManage(null);
+                  }
+                }}
+              >
+                <div className="flex items-center gap-2 font-bold text-primary">
+                  <UserX className="w-4 h-4" /> Desactivación Segura
+                </div>
+                <div className="text-xs text-muted-foreground text-left whitespace-normal font-normal">
+                  El empleado no podrá acceder ni fichar, pero se conservará todo su historial de jornadas y ausencias para auditorías legales. Recomendado.
+                </div>
+              </Button>
+              
+              <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-4 flex flex-col gap-3">
+                <div className="flex items-center gap-2 font-bold text-destructive">
+                  <AlertTriangle className="w-5 h-5" /> Eliminación Total (Irreversible)
+                </div>
+                <div className="text-xs text-destructive/80 text-left whitespace-normal">
+                  Se borrará permanentemente el empleado y <strong>TODOS sus datos asociados</strong> (fichajes, firmas, ausencias, historial de auditoría). Esta acción no se puede deshacer.
+                </div>
+                <Button 
+                  variant="destructive" 
+                  className="w-full mt-2 font-medium"
+                  onClick={() => {
+                    if (employeeToManage && confirm(`⚠️ ATENCIÓN: Estás a punto de eliminar a ${employeeToManage.name} y todos sus registros de forma definitiva.\n\n¿Estás ABSOLUTAMENTE SEGURO? Esta acción no se puede deshacer.`)) {
+                      handleDelete(employeeToManage.id);
+                      setEmployeeToManage(null);
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Eliminar Permanentemente
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
