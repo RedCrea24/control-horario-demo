@@ -12,6 +12,7 @@ import TimeEntries from "@/pages/TimeEntries";
 import Vacations from "@/pages/Vacations";
 import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
+import ControlPro from "@/pages/ControlPro";
 
 function Router() {
   return (
@@ -21,8 +22,9 @@ function Router() {
         <Route path="/empleados" component={Employees}/>
         <Route path="/fichajes" component={TimeEntries}/>
         <Route path="/vacaciones" component={Vacations}/>
-        <Route path="/configuracion" component={Settings}/>
         <Route path="/informes" component={Reports}/>
+        <Route path="/configuracion" component={Settings}/>
+        <Route path="/control-pro" component={ControlPro}/>
         <Route component={NotFound} />
       </Switch>
     </Layout>
