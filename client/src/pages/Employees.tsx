@@ -21,6 +21,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Employees() {
@@ -45,7 +46,7 @@ export default function Employees() {
   );
 
   const [newEmp, setNewEmp] = useState<Partial<Employee>>({
-    name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee'
+    name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40
   });
 
   const isSupervisor = currentUser?.systemRole === 'admin' || currentUser?.systemRole === 'supervisor';
@@ -60,13 +61,14 @@ export default function Employees() {
       role: newEmp.role || '',
       department: newEmp.department || '',
       systemRole: newEmp.systemRole as any || 'employee',
+      weeklyHours: newEmp.weeklyHours || 40,
       scheduleId: schedules?.filter(s => s.companyId === activeCompany.id)[0]?.id || '',
       joinDate: newEmp.joinDate || '',
       active: true,
     };
     setEmployees([...(employees || []), emp]);
     setIsDialogOpen(false);
-    setNewEmp({name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee'});
+    setNewEmp({name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40});
     toast({ title: "Empleado añadido", description: "El empleado ha sido registrado correctamente." });
   };
 
@@ -120,6 +122,20 @@ export default function Employees() {
                     <Label>Cargo</Label>
                     <Input value={newEmp.role} onChange={e => setNewEmp({...newEmp, role: e.target.value})} placeholder="Especialista SEO" />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Jornada Semanal (Horas)</Label>
+                  <Select value={newEmp.weeklyHours?.toString() || '40'} onValueChange={(val) => setNewEmp({...newEmp, weeklyHours: parseInt(val)})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="40">Jornada Completa (40h)</SelectItem>
+                      <SelectItem value="35">Jornada Reducida (35h)</SelectItem>
+                      <SelectItem value="30">Jornada Parcial (30h)</SelectItem>
+                      <SelectItem value="20">Media Jornada (20h)</SelectItem>
+                      <SelectItem value="15">Jornada Parcial (15h)</SelectItem>
+                      <SelectItem value="10">Jornada Parcial (10h)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Fecha de Incorporación</Label>

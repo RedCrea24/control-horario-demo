@@ -19,6 +19,7 @@ export interface Employee {
   systemRole: 'admin' | 'supervisor' | 'employee'; // App access level
   department: string;
   scheduleId: string;
+  weeklyHours: number; // 40 = Completa, 20 = Media, etc
   joinDate: string;
   avatar?: string;
   active: boolean;
@@ -99,6 +100,7 @@ const MOCK_EMPLOYEES: Employee[] = [
     systemRole: 'employee',
     department: 'IT',
     scheduleId: 's1',
+    weeklyHours: 40,
     joinDate: '2022-03-15',
     active: true,
   },
@@ -111,6 +113,7 @@ const MOCK_EMPLOYEES: Employee[] = [
     systemRole: 'admin',
     department: 'RRHH',
     scheduleId: 's1',
+    weeklyHours: 40,
     joinDate: '2021-01-10',
     active: true,
   },
@@ -123,6 +126,7 @@ const MOCK_EMPLOYEES: Employee[] = [
     systemRole: 'supervisor',
     department: 'IT',
     scheduleId: 's1',
+    weeklyHours: 20,
     joinDate: '2021-11-01',
     active: true,
   }

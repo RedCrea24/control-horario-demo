@@ -1,23 +1,55 @@
-import { useState, useRef } from "react";
-import { useActiveCompany, useStore, Company } from "@/lib/store";
+import { useState, useRef, useEffect } from "react";
+import { useActiveCompany, useStore, Company, Schedule } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Building2, Upload, Save, Plus } from "lucide-react";
+import { Building2, Upload, Save, Plus, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const { activeCompany, setActiveCompanyId } = useActiveCompany();
   const [companies, setCompanies] = useStore<Company[]>('companies');
+  const [schedules, setSchedules] = useStore<Schedule[]>('schedules');
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<Partial<Company>>(activeCompany || {});
+  
+  const defaultSchedule: Schedule = {
+    id: 's' + Date.now(),
+    name: 'Horario Base',
+    companyId: activeCompany?.id || '',
+    monday: '09:00-14:00,15:00-18:00',
+    tuesday: '09:00-14:00,15:00-18:00',
+    wednesday: '09:00-14:00,15:00-18:00',
+    thursday: '09:00-14:00,15:00-18:00',
+    friday: '08:00-15:00',
+    saturday: '',
+    sunday: ''
+  };
+
+  const [scheduleData, setScheduleData] = useState<Schedule>(defaultSchedule);
+
+  useEffect(() => {
+    if (activeCompany) {
+      setFormData(activeCompany);
+      const compSchedule = schedules?.find(s => s.companyId === activeCompany.id);
+      if (compSchedule) {
+        setScheduleData(compSchedule);
+      } else {
+        setScheduleData({ ...defaultSchedule, companyId: activeCompany.id });
+      }
+    }
+  }, [activeCompany, schedules]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleScheduleChange = (day: keyof Schedule, value: string) => {
+    setScheduleData(prev => ({ ...prev, [day]: value }));
   };
 
   const handleSave = () => {
@@ -26,11 +58,18 @@ export default function Settings() {
     const updatedCompanies = companies.map(c => 
       c.id === activeCompany.id ? { ...c, ...formData } as Company : c
     );
-    
     setCompanies(updatedCompanies);
+
+    const scheduleExists = schedules.some(s => s.companyId === activeCompany.id);
+    if (scheduleExists) {
+      setSchedules(schedules.map(s => s.companyId === activeCompany.id ? scheduleData : s));
+    } else {
+      setSchedules([...schedules, scheduleData]);
+    }
+
     toast({
       title: "Cambios guardados",
-      description: "Los datos de la empresa se han actualizado correctamente.",
+      description: "Los datos y horarios de la empresa se han actualizado correctamente.",
     });
   };
 
@@ -149,11 +188,11 @@ export default function Settings() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Ajustes Laborales</CardTitle>
+            <CardTitle>Ajustes Laborales y Horarios</CardTitle>
             <CardDescription>Configuración por defecto para empleados</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2 pb-4 border-b">
               <Label htmlFor="workingHoursPerWeek">Horas Semanales de Jornada Completa</Label>
               <Input 
                 id="workingHoursPerWeek" 
@@ -162,7 +201,38 @@ export default function Settings() {
                 value={formData.workingHoursPerWeek || 40} 
                 onChange={handleChange}
               />
-              <p className="text-xs text-muted-foreground">Usado para calcular el porcentaje de jornada y horas extra.</p>
+              <p className="text-xs text-muted-foreground">Usado para calcular el porcentaje de jornada y horas extra (Ej: 40h).</p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-4 h-4 text-primary" />
+                <Label className="text-base font-semibold">Horario de Apertura / Base</Label>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">Introduce los turnos en formato HH:MM-HH:MM separados por comas. Déjalo en blanco si está cerrado.</p>
+              
+              <div className="grid grid-cols-[100px_1fr] gap-3 items-center">
+                <Label className="text-sm">Lunes</Label>
+                <Input value={scheduleData.monday} onChange={e => handleScheduleChange('monday', e.target.value)} placeholder="09:00-14:00,15:00-18:00" className="font-mono text-sm" />
+                
+                <Label className="text-sm">Martes</Label>
+                <Input value={scheduleData.tuesday} onChange={e => handleScheduleChange('tuesday', e.target.value)} placeholder="09:00-14:00,15:00-18:00" className="font-mono text-sm" />
+                
+                <Label className="text-sm">Miércoles</Label>
+                <Input value={scheduleData.wednesday} onChange={e => handleScheduleChange('wednesday', e.target.value)} placeholder="09:00-14:00,15:00-18:00" className="font-mono text-sm" />
+                
+                <Label className="text-sm">Jueves</Label>
+                <Input value={scheduleData.thursday} onChange={e => handleScheduleChange('thursday', e.target.value)} placeholder="09:00-14:00,15:00-18:00" className="font-mono text-sm" />
+                
+                <Label className="text-sm">Viernes</Label>
+                <Input value={scheduleData.friday} onChange={e => handleScheduleChange('friday', e.target.value)} placeholder="08:00-15:00" className="font-mono text-sm" />
+                
+                <Label className="text-sm">Sábado</Label>
+                <Input value={scheduleData.saturday} onChange={e => handleScheduleChange('saturday', e.target.value)} placeholder="Cerrado" className="font-mono text-sm" />
+                
+                <Label className="text-sm">Domingo</Label>
+                <Input value={scheduleData.sunday} onChange={e => handleScheduleChange('sunday', e.target.value)} placeholder="Cerrado" className="font-mono text-sm" />
+              </div>
             </div>
 
             <div className="pt-6 flex justify-end">
