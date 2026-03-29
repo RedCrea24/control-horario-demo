@@ -7,9 +7,10 @@ import {
   Settings, 
   FileBarChart,
   SlidersHorizontal,
-  Menu
+  Menu,
+  ShieldCheck
 } from "lucide-react";
-import { useActiveCompany } from "@/lib/store";
+import { useActiveCompany, useCurrentUser } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -25,18 +26,22 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/fichajes", label: "Fichajes", icon: Clock },
-  { href: "/empleados", label: "Empleados", icon: Users },
-  { href: "/vacaciones", label: "Ausencias", icon: CalendarDays },
-  { href: "/informes", label: "Informes", icon: FileBarChart },
-  { href: "/configuracion", label: "Empresa", icon: Settings },
-];
-
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { activeCompany, setActiveCompanyId, companies } = useActiveCompany();
+  const { currentUser, setCurrentUserId, employees } = useCurrentUser();
+
+  const isAdmin = currentUser?.systemRole === 'admin';
+  const isSupervisor = currentUser?.systemRole === 'supervisor' || isAdmin;
+
+  const navItems = [
+    { href: "/", label: "Dashboard", icon: LayoutDashboard, show: true },
+    { href: "/fichajes", label: "Fichajes", icon: Clock, show: true },
+    { href: "/vacaciones", label: "Ausencias", icon: CalendarDays, show: true },
+    { href: "/empleados", label: "Empleados", icon: Users, show: isSupervisor },
+    { href: "/informes", label: "Informes", icon: FileBarChart, show: isSupervisor },
+    { href: "/configuracion", label: "Empresa", icon: Settings, show: isAdmin },
+  ].filter(item => item.show);
 
   const NavLinks = () => (
     <div className="flex flex-col space-y-1 mt-6">
@@ -59,20 +64,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
         );
       })}
       
-      <div className="pt-4 mt-4 border-t">
-        <Link href="/control-pro">
-          <div
-            className={`flex items-center space-x-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
-              location === "/control-pro"
-                ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent"
-            }`}
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-            <span>Control Pro</span>
-          </div>
-        </Link>
-      </div>
+      {isAdmin && (
+        <div className="pt-4 mt-4 border-t">
+          <Link href="/control-pro">
+            <div
+              className={`flex items-center space-x-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
+                location === "/control-pro"
+                  ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent"
+              }`}
+            >
+              <SlidersHorizontal className="w-5 h-5" />
+              <span>Control Pro</span>
+            </div>
+          </Link>
+        </div>
+      )}
     </div>
   );
 
@@ -86,37 +93,71 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span>ControlPro</span>
           </div>
           
-          <Select value={activeCompany?.id} onValueChange={setActiveCompanyId}>
-            <SelectTrigger className="w-full bg-secondary/50 border-none">
-              <div className="flex items-center gap-2 overflow-hidden">
-                <Avatar className="w-6 h-6 rounded-md">
-                  <AvatarImage src={activeCompany?.logo} />
-                  <AvatarFallback className="rounded-md bg-primary/10 text-primary text-xs">
-                    {activeCompany?.name?.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="truncate font-medium">{activeCompany?.name}</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              {companies?.map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isAdmin ? (
+            <Select value={activeCompany?.id} onValueChange={setActiveCompanyId}>
+              <SelectTrigger className="w-full bg-secondary/50 border-none">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <Avatar className="w-6 h-6 rounded-md">
+                    <AvatarImage src={activeCompany?.logo} />
+                    <AvatarFallback className="rounded-md bg-primary/10 text-primary text-xs">
+                      {activeCompany?.name?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate font-medium">{activeCompany?.name}</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {companies?.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex items-center gap-2 overflow-hidden px-3 py-2 bg-secondary/50 rounded-md">
+              <Avatar className="w-6 h-6 rounded-md">
+                <AvatarImage src={activeCompany?.logo} />
+                <AvatarFallback className="rounded-md bg-primary/10 text-primary text-xs">
+                  {activeCompany?.name?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate font-medium text-sm">{activeCompany?.name}</span>
+            </div>
+          )}
         </div>
         <div className="flex-1 px-3 py-2 overflow-y-auto">
           <NavLinks />
         </div>
         <div className="p-4 border-t">
-          <div className="flex items-center gap-3">
-            <Avatar className="w-9 h-9">
-              <AvatarFallback className="bg-primary text-primary-foreground">AD</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-medium truncate">Admin Usuario</span>
-              <span className="text-xs text-muted-foreground truncate">admin@empresa.com</span>
+          <div className="flex flex-col gap-2">
+            <div className="text-xs text-muted-foreground font-medium flex items-center gap-1 uppercase tracking-wider mb-1">
+              <ShieldCheck className="w-3 h-3" />
+              Simular Sesión
             </div>
+            <Select value={currentUser?.id} onValueChange={setCurrentUserId}>
+              <SelectTrigger className="w-full h-auto py-2">
+                <div className="flex items-center gap-3 text-left w-full overflow-hidden">
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {currentUser?.name?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-sm font-medium truncate">{currentUser?.name}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase truncate">
+                      {currentUser?.systemRole === 'admin' ? 'Administrador' : 
+                       currentUser?.systemRole === 'supervisor' ? 'Supervisor' : 'Empleado'}
+                    </span>
+                  </div>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {employees?.map(e => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.name} ({e.systemRole})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </aside>
@@ -140,16 +181,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Clock className="w-6 h-6" />
                   <span>ControlPro</span>
                 </div>
-                <Select value={activeCompany?.id} onValueChange={setActiveCompanyId}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies?.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="px-3">
                 <NavLinks />

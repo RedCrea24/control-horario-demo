@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useActiveCompany, useStore, Employee, Schedule } from "@/lib/store";
+import { useActiveCompany, useStore, Employee, Schedule, useCurrentUser } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export default function Employees() {
+  const { currentUser } = useCurrentUser();
   const { activeCompany } = useActiveCompany();
   const [employees, setEmployees] = useStore<Employee[]>('employees');
   const [schedules] = useStore<Schedule[]>('schedules');
@@ -38,8 +39,10 @@ export default function Employees() {
   );
 
   const [newEmp, setNewEmp] = useState<Partial<Employee>>({
-    name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0]
+    name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee'
   });
+
+  const isSupervisor = currentUser?.systemRole === 'admin' || currentUser?.systemRole === 'supervisor';
 
   const handleAdd = () => {
     if (!activeCompany) return;
@@ -50,13 +53,14 @@ export default function Employees() {
       email: newEmp.email || '',
       role: newEmp.role || '',
       department: newEmp.department || '',
+      systemRole: newEmp.systemRole as any || 'employee',
       scheduleId: schedules?.filter(s => s.companyId === activeCompany.id)[0]?.id || '',
       joinDate: newEmp.joinDate || '',
       active: true,
     };
     setEmployees([...(employees || []), emp]);
     setIsDialogOpen(false);
-    setNewEmp({name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0]});
+    setNewEmp({name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee'});
   };
 
   return (
@@ -67,44 +71,46 @@ export default function Employees() {
           <p className="text-muted-foreground mt-1">Directorio y gestión del personal</p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Nuevo Empleado
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Añadir Nuevo Empleado</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Nombre Completo</Label>
-                <Input value={newEmp.name} onChange={e => setNewEmp({...newEmp, name: e.target.value})} placeholder="Ej. Ana García" />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" value={newEmp.email} onChange={e => setNewEmp({...newEmp, email: e.target.value})} placeholder="ana@empresa.com" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        {isSupervisor && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                Nuevo Empleado
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Añadir Nuevo Empleado</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Departamento</Label>
-                  <Input value={newEmp.department} onChange={e => setNewEmp({...newEmp, department: e.target.value})} placeholder="Marketing" />
+                  <Label>Nombre Completo</Label>
+                  <Input value={newEmp.name} onChange={e => setNewEmp({...newEmp, name: e.target.value})} placeholder="Ej. Ana García" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Cargo</Label>
-                  <Input value={newEmp.role} onChange={e => setNewEmp({...newEmp, role: e.target.value})} placeholder="Especialista SEO" />
+                  <Label>Email</Label>
+                  <Input type="email" value={newEmp.email} onChange={e => setNewEmp({...newEmp, email: e.target.value})} placeholder="ana@empresa.com" />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Departamento</Label>
+                    <Input value={newEmp.department} onChange={e => setNewEmp({...newEmp, department: e.target.value})} placeholder="Marketing" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cargo</Label>
+                    <Input value={newEmp.role} onChange={e => setNewEmp({...newEmp, role: e.target.value})} placeholder="Especialista SEO" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Fecha de Incorporación</Label>
+                  <Input type="date" value={newEmp.joinDate} onChange={e => setNewEmp({...newEmp, joinDate: e.target.value})} />
+                </div>
+                <Button onClick={handleAdd} className="w-full mt-4">Guardar Empleado</Button>
               </div>
-              <div className="space-y-2">
-                <Label>Fecha de Incorporación</Label>
-                <Input type="date" value={newEmp.joinDate} onChange={e => setNewEmp({...newEmp, joinDate: e.target.value})} />
-              </div>
-              <Button onClick={handleAdd} className="w-full mt-4">Guardar Empleado</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Card>
@@ -127,13 +133,14 @@ export default function Employees() {
                 <TableHead>Contacto</TableHead>
                 <TableHead>Departamento</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead>Rol</TableHead>
+                {isSupervisor && <TableHead className="text-right">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredEmployees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                     No se encontraron empleados
                   </TableCell>
                 </TableRow>
@@ -165,11 +172,16 @@ export default function Employees() {
                         {emp.active ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon">
-                        <UserCog className="w-4 h-4 text-muted-foreground" />
-                      </Button>
+                    <TableCell>
+                       <span className="text-xs text-muted-foreground uppercase">{emp.systemRole}</span>
                     </TableCell>
+                    {isSupervisor && (
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon">
+                          <UserCog className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

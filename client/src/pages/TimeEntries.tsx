@@ -1,105 +1,114 @@
 import { useState, useEffect } from "react";
-import { useActiveCompany, useStore, Employee, TimeEntry } from "@/lib/store";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useCurrentUser, useStore, Employee, TimeEntry } from "@/lib/store";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Square, Pause, History, Clock } from "lucide-react";
+import { Play, Square, Pause, History, Clock, ShieldCheck, PenTool, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function TimeEntries() {
-  const { activeCompany } = useActiveCompany();
+  const { currentUser } = useCurrentUser();
   const [employees] = useStore<Employee[]>('employees');
   const [entries, setEntries] = useStore<TimeEntry[]>('entries');
   const { toast } = useToast();
   
-  // For demo purposes, we pick the first employee of the company to simulate "My User"
-  const companyEmployees = employees?.filter(e => e.companyId === activeCompany?.id) || [];
-  const currentUser = companyEmployees[0];
-
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [signatureModal, setSignatureModal] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  if (!currentUser) return null;
+
   const todayStr = currentTime.toISOString().split('T')[0];
-  
-  // Find open entry for current user today
-  const activeEntry = entries?.find(e => 
-    e.employeeId === currentUser?.id && 
-    e.date === todayStr && 
-    !e.clockOut
-  );
+  const activeEntry = entries?.find(e => e.employeeId === currentUser.id && e.date === todayStr && !e.clockOut);
+
+  const canValidate = currentUser.systemRole === 'admin' || currentUser.systemRole === 'supervisor';
 
   const handleClockIn = () => {
-    if (!currentUser) return;
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     const newEntry: TimeEntry = {
       id: 't' + Date.now(),
       employeeId: currentUser.id,
       date: todayStr,
       clockIn: timeStr,
-      type: 'regular'
+      type: 'regular',
+      status: 'pending',
+      history: [{ timestamp: new Date().toISOString(), action: 'Clock In', by: currentUser.id }]
     };
-    
     setEntries([newEntry, ...(entries || [])]);
-    toast({ title: "Fichaje iniciado", description: `Hora de entrada registrada: ${timeStr}` });
+    toast({ title: "Fichaje iniciado", description: `Hora: ${timeStr}` });
   };
 
   const handleClockOut = () => {
     if (!activeEntry) return;
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
+    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     const updated = (entries || []).map(e => 
-      e.id === activeEntry.id ? { ...e, clockOut: timeStr } : e
+      e.id === activeEntry.id ? { 
+        ...e, 
+        clockOut: timeStr,
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Clock Out', by: currentUser.id }]
+      } : e
     );
-    
     setEntries(updated);
-    toast({ title: "Fichaje finalizado", description: `Hora de salida registrada: ${timeStr}` });
+    toast({ title: "Fichaje finalizado", description: `Hora: ${timeStr}` });
   };
 
-  // Helper to calculate duration
+  const signEntry = (id: string) => {
+    const updated = entries.map(e => 
+      e.id === id ? { 
+        ...e, 
+        employeeSignature: `Firmado por ${currentUser.name} el ${new Date().toLocaleString()}`,
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Signed', by: currentUser.id }]
+      } : e
+    );
+    setEntries(updated);
+    setSignatureModal(null);
+    toast({ title: "Documento firmado digitalmente" });
+  };
+
+  const validateEntry = (id: string) => {
+    const updated = entries.map(e => 
+      e.id === id ? { 
+        ...e, 
+        status: 'validated' as const,
+        validatedBy: currentUser.id,
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Validated', by: currentUser.id }]
+      } : e
+    );
+    setEntries(updated);
+    toast({ title: "Fichaje validado por supervisor" });
+  };
+
   const getDuration = (inTime: string, outTime?: string) => {
     if (!outTime) return "En curso";
     const [inH, inM] = inTime.split(':').map(Number);
     const [outH, outM] = outTime.split(':').map(Number);
-    
     let diffMins = (outH * 60 + outM) - (inH * 60 + inM);
-    if (diffMins < 0) diffMins += 24 * 60; // crossover midnight
-    
+    if (diffMins < 0) diffMins += 24 * 60;
     const h = Math.floor(diffMins / 60);
     const m = diffMins % 60;
     return `${h}h ${m}m`;
   };
 
-  // Recent entries for this company
-  const recentEntries = (entries || [])
-    .filter(e => companyEmployees.some(emp => emp.id === e.employeeId))
+  const visibleEntries = (entries || [])
+    .filter(e => canValidate ? true : e.employeeId === currentUser.id)
     .sort((a, b) => new Date(`${b.date}T${b.clockIn}`).getTime() - new Date(`${a.date}T${a.clockIn}`).getTime())
-    .slice(0, 10);
+    .slice(0, 15);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Fichajes</h1>
-        <p className="text-muted-foreground mt-1">Registro de jornada laboral interactivo</p>
+        <h1 className="text-3xl font-bold tracking-tight">Fichajes y Registro de Jornada</h1>
+        <p className="text-muted-foreground mt-1">Cumplimiento de la normativa de registro horario (Art. 34.9 ET)</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Terminal/Clock In Card */}
-        <Card className="md:col-span-1 border-primary/20 shadow-md">
+        <Card className="md:col-span-1 border-primary/20 shadow-md h-fit">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Terminal Virtual</CardTitle>
           </CardHeader>
@@ -108,126 +117,110 @@ export default function TimeEntries() {
               {currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
             </div>
             
-            <div className="text-sm text-muted-foreground">
-              {currentTime.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </div>
-
             <div className="w-full flex flex-col gap-3 pt-4 border-t">
-              <div className="text-center mb-2">
-                <span className="text-sm text-muted-foreground">Usuario activo: </span>
-                <span className="font-medium">{currentUser?.name || 'Selecciona empleado'}</span>
-              </div>
-              
               {!activeEntry ? (
-                <Button 
-                  size="lg" 
-                  className="w-full h-16 text-lg bg-green-600 hover:bg-green-700 hover-elevate"
-                  onClick={handleClockIn}
-                  disabled={!currentUser}
-                >
-                  <Play className="w-5 h-5 mr-2" fill="currentColor" />
-                  Entrada
+                <Button size="lg" className="w-full h-16 text-lg bg-green-600 hover:bg-green-700" onClick={handleClockIn}>
+                  <Play className="w-5 h-5 mr-2" fill="currentColor" /> Entrada
                 </Button>
               ) : (
                 <div className="flex gap-2">
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="flex-1 h-16 hover-elevate bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 border-orange-200"
-                  >
-                    <Pause className="w-5 h-5 mr-2" fill="currentColor" />
-                    Pausa
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="destructive"
-                    className="flex-1 h-16 hover-elevate"
-                    onClick={handleClockOut}
-                  >
-                    <Square className="w-5 h-5 mr-2" fill="currentColor" />
-                    Salida
+                  <Button size="lg" variant="destructive" className="flex-1 h-16" onClick={handleClockOut}>
+                    <Square className="w-5 h-5 mr-2" fill="currentColor" /> Salida
                   </Button>
                 </div>
               )}
             </div>
-            
-            {activeEntry && (
-              <div className="animate-in fade-in slide-in-from-bottom-2 text-sm text-green-600 font-medium flex items-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                Fichaje activo desde las {activeEntry.clockIn}
-              </div>
-            )}
           </CardContent>
+          <CardFooter className="bg-secondary/30 p-4 text-xs text-muted-foreground text-center flex items-center justify-center gap-2 border-t">
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            Registro protegido contra manipulaciones
+          </CardFooter>
         </Card>
 
-        {/* Recent Entries */}
         <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <History className="w-5 h-5 text-primary" />
-                Registros Recientes
-              </CardTitle>
-              <CardDescription>Últimos movimientos de la empresa</CardDescription>
-            </div>
-            <Button variant="outline" size="sm">Ver todos</Button>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              {canValidate ? 'Registros de la Empresa' : 'Mis Registros'}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Empleado</TableHead>
                   <TableHead>Fecha</TableHead>
-                  <TableHead>Entrada</TableHead>
-                  <TableHead>Salida</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+                  {canValidate && <TableHead>Empleado</TableHead>}
+                  <TableHead>Horas</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Firma Empleado</TableHead>
+                  {canValidate && <TableHead className="text-right">Acción</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentEntries.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                      No hay registros todavía
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  recentEntries.map((entry) => {
-                    const emp = companyEmployees.find(e => e.id === entry.employeeId);
-                    return (
-                      <TableRow key={entry.id}>
-                        <TableCell className="font-medium">{emp?.name || 'Desconocido'}</TableCell>
-                        <TableCell>{new Date(entry.date).toLocaleDateString('es-ES')}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                            {entry.clockIn}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {entry.clockOut ? (
-                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                              {entry.clockOut}
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> En curso
-                            </span>
+                {visibleEntries.map((entry) => {
+                  const emp = employees.find(e => e.id === entry.employeeId);
+                  const isOwner = entry.employeeId === currentUser.id;
+                  
+                  return (
+                    <TableRow key={entry.id} className={entry.status === 'validated' ? 'bg-secondary/10' : ''}>
+                      <TableCell className="font-medium">{new Date(entry.date).toLocaleDateString('es-ES')}</TableCell>
+                      {canValidate && <TableCell>{emp?.name}</TableCell>}
+                      <TableCell>
+                        <div className="text-sm">{entry.clockIn} - {entry.clockOut || '...'}</div>
+                        <div className="text-xs text-muted-foreground">{getDuration(entry.clockIn, entry.clockOut)}</div>
+                      </TableCell>
+                      <TableCell>
+                        {entry.status === 'validated' ? 
+                          <Badge className="bg-green-100 text-green-700 shadow-none border-green-200"><CheckCircle className="w-3 h-3 mr-1"/> Validado</Badge> : 
+                          <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">Pendiente</Badge>
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {entry.employeeSignature ? (
+                          <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">Firmado</Badge>
+                        ) : (
+                          isOwner && entry.clockOut && entry.status !== 'validated' ? (
+                            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setSignatureModal(entry.id)}>
+                              <PenTool className="w-3 h-3 mr-1" /> Firmar
+                            </Button>
+                          ) : <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      {canValidate && (
+                        <TableCell className="text-right">
+                          {entry.status === 'pending' && entry.clockOut && (
+                            <Button variant="ghost" size="sm" className="text-green-600" onClick={() => validateEntry(entry.id)}>
+                              Validar
+                            </Button>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-medium text-muted-foreground">
-                          {getDuration(entry.clockIn, entry.clockOut)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
+                      )}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={!!signatureModal} onOpenChange={(open) => !open && setSignatureModal(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Firma Digital de Fichaje</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Al firmar este documento, certificas que las horas registradas correspondientes a este fichaje son correctas y veraces según lo estipulado en la normativa laboral vigente.
+            </p>
+            <div className="p-4 bg-secondary/30 rounded-lg text-center font-mono border-2 border-dashed border-muted-foreground/30">
+              <div className="font-handwriting text-2xl text-primary">{currentUser.name}</div>
+              <div className="text-xs text-muted-foreground mt-2">{new Date().toLocaleString()}</div>
+            </div>
+            <Button onClick={() => signatureModal && signEntry(signatureModal)} className="w-full gap-2">
+              <PenTool className="w-4 h-4" /> Confirmar Firma
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

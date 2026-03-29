@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useActiveCompany, useStore, Employee, TimeEntry, Company } from "@/lib/store";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useActiveCompany, useStore, Employee, TimeEntry } from "@/lib/store";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Download, Printer } from "lucide-react";
+import { Download, Printer, ShieldCheck } from "lucide-react";
 
 export default function Reports() {
   const { activeCompany } = useActiveCompany();
@@ -19,75 +18,26 @@ export default function Reports() {
 
   const companyEmployees = employees?.filter(e => e.companyId === activeCompany?.id) || [];
   
-  // Filter entries for the report
   const reportEntries = (entries || []).filter(entry => {
     const entryDate = new Date(entry.date);
     const inMonth = entryDate.getMonth().toString() === month && entryDate.getFullYear().toString() === year;
     const isCompanyEmp = companyEmployees.some(e => e.id === entry.employeeId);
     const isSelectedEmp = selectedEmp === "all" || entry.employeeId === selectedEmp;
-    
     return inMonth && isCompanyEmp && isSelectedEmp;
   }).sort((a, b) => new Date(`${a.date}T${a.clockIn}`).getTime() - new Date(`${b.date}T${b.clockIn}`).getTime());
 
-  // Aggregate by employee for summary
-  const summaryByEmp = companyEmployees.filter(e => selectedEmp === "all" || e.id === selectedEmp).map(emp => {
-    const empEntries = reportEntries.filter(entry => entry.employeeId === emp.id);
-    let totalMinutes = 0;
-    
-    empEntries.forEach(entry => {
-      if (entry.clockOut) {
-        const [inH, inM] = entry.clockIn.split(':').map(Number);
-        const [outH, outM] = entry.clockOut.split(':').map(Number);
-        let diffMins = (outH * 60 + outM) - (inH * 60 + inM);
-        if (diffMins < 0) diffMins += 24 * 60;
-        totalMinutes += diffMins;
-      }
-    });
-    
-    return {
-      emp,
-      entriesCount: empEntries.length,
-      totalHours: Math.floor(totalMinutes / 60),
-      totalMinutes: totalMinutes % 60
-    };
-  });
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleExportCSV = () => {
-    const headers = ["Fecha", "Empleado", "Entrada", "Salida", "Tipo"];
-    const rows = reportEntries.map(e => {
-      const empName = companyEmployees.find(emp => emp.id === e.employeeId)?.name || 'Desconocido';
-      return `${e.date},${empName},${e.clockIn},${e.clockOut || ''},${e.type}`;
-    });
-    
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `informe_${activeCompany?.name}_${month}_${year}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const handlePrint = () => window.print();
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center print:hidden">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Informes</h1>
-          <p className="text-muted-foreground mt-1">Generador de reportes de control horario legales</p>
+          <h1 className="text-3xl font-bold tracking-tight">Auditoría e Informes</h1>
+          <p className="text-muted-foreground mt-1">Documentos oficiales para inspección de trabajo</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportCSV} className="gap-2">
-            <Download className="w-4 h-4" /> CSV
-          </Button>
           <Button onClick={handlePrint} className="gap-2">
-            <Printer className="w-4 h-4" /> Imprimir / PDF
+            <Printer className="w-4 h-4" /> Imprimir Documento Oficial
           </Button>
         </div>
       </div>
@@ -100,9 +50,7 @@ export default function Reports() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {Array.from({length: 12}).map((_, i) => (
-                  <SelectItem key={i} value={i.toString()}>
-                    {new Date(2000, i, 1).toLocaleString('es-ES', { month: 'long' })}
-                  </SelectItem>
+                  <SelectItem key={i} value={i.toString()}>{new Date(2000, i, 1).toLocaleString('es-ES', { month: 'long' })}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -112,9 +60,7 @@ export default function Reports() {
             <Select value={year} onValueChange={setYear}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {[2023, 2024, 2025, 2026].map(y => (
-                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                ))}
+                {[2023, 2024, 2025, 2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -123,108 +69,91 @@ export default function Reports() {
             <Select value={selectedEmp} onValueChange={setSelectedEmp}>
               <SelectTrigger><SelectValue placeholder="Todos los empleados" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los empleados</SelectItem>
-                {companyEmployees.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
-                ))}
+                <SelectItem value="all">Resumen global</SelectItem>
+                {companyEmployees.map(emp => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Printable Area */}
-      <div className="print:block space-y-8 bg-card border rounded-xl p-8 shadow-sm print:shadow-none print:border-none print:p-0">
-        
-        {/* Report Header for Print */}
-        <div className="flex items-start justify-between border-b pb-6">
+      {/* Printable Area - styled explicitly to look like an official document */}
+      <div className="print:block space-y-8 bg-white text-black border rounded-xl p-12 shadow-sm print:shadow-none print:border-none print:p-0 min-h-[800px]">
+        <div className="flex items-start justify-between border-b-2 border-black pb-6">
           <div className="flex items-center gap-4">
             {activeCompany?.logo ? (
-              <img src={activeCompany.logo} alt="Logo" className="w-16 h-16 object-contain" />
+              <img src={activeCompany.logo} alt="Logo" className="w-20 h-20 object-contain grayscale print:grayscale-0" />
             ) : (
-              <div className="w-16 h-16 bg-primary/10 rounded flex items-center justify-center text-primary font-bold">
-                LOGO
+              <div className="w-20 h-20 bg-gray-100 border border-gray-300 rounded flex items-center justify-center text-gray-500 font-bold text-sm text-center p-2">
+                Logotipo Empresa
               </div>
             )}
             <div>
-              <h2 className="text-xl font-bold">{activeCompany?.name}</h2>
-              <p className="text-sm text-muted-foreground">NIF: {activeCompany?.nif}</p>
-              <p className="text-sm text-muted-foreground">{activeCompany?.address}</p>
+              <h2 className="text-2xl font-bold font-sans uppercase">{activeCompany?.name}</h2>
+              <p className="text-sm text-gray-600">CIF/NIF: {activeCompany?.nif}</p>
+              <p className="text-sm text-gray-600">{activeCompany?.address}</p>
             </div>
           </div>
           <div className="text-right">
-            <h3 className="font-bold text-lg uppercase tracking-wider text-primary">Registro de Jornada</h3>
-            <p className="text-sm text-muted-foreground">
-              Mes: {new Date(parseInt(year), parseInt(month), 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+            <h3 className="font-bold text-xl uppercase tracking-widest text-black">Registro Diario de Jornada</h3>
+            <p className="text-sm text-gray-600 mt-1">Art. 34.9 Estatuto de los Trabajadores</p>
+            <p className="text-sm font-medium mt-2">
+              Periodo: {new Date(parseInt(year), parseInt(month), 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase()}
             </p>
           </div>
         </div>
 
-        {selectedEmp !== "all" && summaryByEmp[0] ? (
-          <div className="bg-secondary/20 p-4 rounded-lg flex justify-between">
-            <div>
-              <p className="text-sm font-bold">Trabajador: <span className="font-normal">{summaryByEmp[0].emp.name}</span></p>
-              <p className="text-sm font-bold">DNI/NIE: <span className="font-normal">___________</span></p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-bold">Total Horas Ordinarias: <span className="font-normal">{summaryByEmp[0].totalHours}h {summaryByEmp[0].totalMinutes}m</span></p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {summaryByEmp.map(sum => (
-              <div key={sum.emp.id} className="border p-3 rounded text-sm">
-                <div className="font-bold truncate">{sum.emp.name}</div>
-                <div className="text-muted-foreground">{sum.totalHours}h {sum.totalMinutes}m</div>
-              </div>
-            ))}
+        {selectedEmp !== "all" && (
+          <div className="border-2 border-black p-4 grid grid-cols-2 gap-4 text-sm">
+            <div><span className="font-bold">Trabajador/a:</span> {companyEmployees.find(e => e.id === selectedEmp)?.name}</div>
+            <div><span className="font-bold">NIF/NIE:</span> ___________________</div>
+            <div><span className="font-bold">Centro de Trabajo:</span> {activeCompany?.address}</div>
+            <div><span className="font-bold">Mes/Año:</span> {parseInt(month)+1}/{year}</div>
           </div>
         )}
 
-        <div>
-          <h3 className="font-bold mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-primary" />
-            Detalle de Movimientos
-          </h3>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-secondary/50">
-                <TableHead>Fecha</TableHead>
-                {selectedEmp === "all" && <TableHead>Empleado</TableHead>}
-                <TableHead>Hora Entrada</TableHead>
-                <TableHead>Hora Salida</TableHead>
-                <TableHead>Firma Trabajador</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reportEntries.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">No hay datos en el periodo seleccionado</TableCell>
+        <Table className="border-collapse border border-black w-full text-sm">
+          <TableHeader>
+            <TableRow className="border-b-2 border-black bg-gray-50 hover:bg-gray-50">
+              <TableHead className="border-r border-black font-bold text-black h-10 py-2">Día</TableHead>
+              {selectedEmp === "all" && <TableHead className="border-r border-black font-bold text-black h-10 py-2">Empleado</TableHead>}
+              <TableHead className="border-r border-black font-bold text-black h-10 py-2">Entrada</TableHead>
+              <TableHead className="border-r border-black font-bold text-black h-10 py-2">Salida</TableHead>
+              <TableHead className="border-r border-black font-bold text-black h-10 py-2">Estado</TableHead>
+              <TableHead className="font-bold text-black h-10 py-2">Firma / Validación</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reportEntries.map(entry => {
+              const emp = companyEmployees.find(e => e.id === entry.employeeId);
+              return (
+                <TableRow key={entry.id} className="border-b border-black hover:bg-transparent">
+                  <TableCell className="border-r border-black py-2">{new Date(entry.date).toLocaleDateString('es-ES')}</TableCell>
+                  {selectedEmp === "all" && <TableCell className="border-r border-black py-2">{emp?.name}</TableCell>}
+                  <TableCell className="border-r border-black py-2">{entry.clockIn}</TableCell>
+                  <TableCell className="border-r border-black py-2">{entry.clockOut || '-'}</TableCell>
+                  <TableCell className="border-r border-black py-2 text-xs">
+                    {entry.status === 'validated' ? 'Validado' : 'Pendiente'}
+                  </TableCell>
+                  <TableCell className="py-2 text-[10px] text-gray-500 italic max-w-[200px] truncate">
+                    {entry.employeeSignature ? (
+                      <div className="flex items-center gap-1"><ShieldCheck className="w-3 h-3"/> {entry.employeeSignature}</div>
+                    ) : '____________________'}
+                  </TableCell>
                 </TableRow>
-              ) : (
-                reportEntries.map(entry => {
-                  const emp = companyEmployees.find(e => e.id === entry.employeeId);
-                  return (
-                    <TableRow key={entry.id}>
-                      <TableCell>{new Date(entry.date).toLocaleDateString('es-ES')}</TableCell>
-                      {selectedEmp === "all" && <TableCell>{emp?.name}</TableCell>}
-                      <TableCell>{entry.clockIn}</TableCell>
-                      <TableCell>{entry.clockOut || '-'}</TableCell>
-                      <TableCell className="border-b border-dashed border-muted-foreground/30 w-32"></TableCell>
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        
-        <div className="pt-16 grid grid-cols-2 gap-8 text-center print:block hidden">
+              )
+            })}
+          </TableBody>
+        </Table>
+
+        <div className="pt-20 grid grid-cols-2 gap-16 text-center">
           <div>
-            <div className="border-t border-black w-48 mx-auto pt-2">Firma de la Empresa</div>
+            <div className="border-t border-black w-64 mx-auto pt-2 font-bold">Firma y Sello de la Empresa</div>
+            <p className="text-xs text-gray-500 mt-2">D/Dña. ___________________________</p>
           </div>
           <div>
-            <div className="border-t border-black w-48 mx-auto pt-2">Firma del Trabajador</div>
+            <div className="border-t border-black w-64 mx-auto pt-2 font-bold">Firma de la persona trabajadora</div>
+            <p className="text-xs text-gray-500 mt-2">Conforme con el registro de horas</p>
           </div>
         </div>
       </div>

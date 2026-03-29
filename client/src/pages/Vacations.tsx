@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useActiveCompany, useStore, Employee, Vacation } from "@/lib/store";
+import { useActiveCompany, useStore, Employee, Vacation, useCurrentUser } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Plus, Check, X } from "lucide-react";
+import { CalendarDays, Plus, Check, X, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Vacations() {
+  const { currentUser } = useCurrentUser();
   const { activeCompany } = useActiveCompany();
   const [employees] = useStore<Employee[]>('employees');
   const [vacations, setVacations] = useStore<Vacation[]>('vacations');
@@ -25,8 +26,15 @@ export default function Vacations() {
     endDate: new Date().toISOString().split('T')[0],
   });
 
+  const canValidate = currentUser?.systemRole === 'admin' || currentUser?.systemRole === 'supervisor';
+
   const companyEmployees = employees?.filter(e => e.companyId === activeCompany?.id) || [];
-  const companyVacations = vacations?.filter(v => companyEmployees.some(e => e.id === v.employeeId)) || [];
+  
+  // If not admin/supervisor, only show own vacations
+  const companyVacations = vacations?.filter(v => 
+    companyEmployees.some(e => e.id === v.employeeId) && 
+    (canValidate || v.employeeId === currentUser?.id)
+  ) || [];
 
   const handleAdd = () => {
     if (!newVacation.employeeId || !newVacation.startDate || !newVacation.endDate) {
@@ -41,7 +49,8 @@ export default function Vacations() {
       endDate: newVacation.endDate,
       type: newVacation.type as any,
       status: 'pending',
-      notes: newVacation.notes
+      notes: newVacation.notes,
+      history: [{ timestamp: new Date().toISOString(), action: 'Solicitud creada', by: currentUser?.id || '' }]
     };
     
     setVacations([vac, ...(vacations || [])]);
@@ -50,8 +59,15 @@ export default function Vacations() {
   };
 
   const updateStatus = (id: string, status: 'approved' | 'rejected') => {
-    const updated = vacations.map(v => v.id === id ? { ...v, status } : v);
+    const updated = vacations.map(v => 
+      v.id === id ? { 
+        ...v, 
+        status,
+        history: [...(v.history||[]), { timestamp: new Date().toISOString(), action: `Estado cambiado a ${status}`, by: currentUser?.id || '' }]
+      } : v
+    );
     setVacations(updated);
+    toast({ title: `Solicitud ${status === 'approved' ? 'aprobada' : 'rechazada'}` });
   };
 
   const getStatusBadge = (status: string) => {
@@ -93,12 +109,20 @@ export default function Vacations() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Empleado</Label>
-                <Select onValueChange={(val) => setNewVacation({...newVacation, employeeId: val})}>
+                <Select 
+                  onValueChange={(val) => setNewVacation({...newVacation, employeeId: val})}
+                  defaultValue={!canValidate ? currentUser?.id : undefined}
+                  disabled={!canValidate}
+                >
                   <SelectTrigger><SelectValue placeholder="Seleccionar empleado" /></SelectTrigger>
                   <SelectContent>
-                    {companyEmployees.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
-                    ))}
+                    {canValidate ? (
+                      companyEmployees.map(emp => (
+                        <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                      ))
+                    ) : (
+                       currentUser && <SelectItem value={currentUser.id}>{currentUser.name}</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -138,7 +162,7 @@ export default function Vacations() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CalendarDays className="w-5 h-5 text-primary" />
-              Resumen
+              Resumen {canValidate ? 'Empresa' : 'Personal'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -165,7 +189,7 @@ export default function Vacations() {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Fechas</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  {canValidate && <TableHead className="text-right">Aprobar</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -186,18 +210,23 @@ export default function Vacations() {
                           {new Date(vac.startDate).toLocaleDateString('es-ES')} - {new Date(vac.endDate).toLocaleDateString('es-ES')}
                         </TableCell>
                         <TableCell>{getStatusBadge(vac.status)}</TableCell>
-                        <TableCell className="text-right">
-                          {vac.status === 'pending' && (
-                            <div className="flex justify-end gap-1">
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:bg-green-50" onClick={() => updateStatus(vac.id, 'approved')}>
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:bg-red-50" onClick={() => updateStatus(vac.id, 'rejected')}>
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
+                        {canValidate && (
+                          <TableCell className="text-right">
+                            {vac.status === 'pending' && (
+                              <div className="flex justify-end gap-1">
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600 hover:bg-green-50" onClick={() => updateStatus(vac.id, 'approved')}>
+                                  <Check className="w-4 h-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:bg-red-50" onClick={() => updateStatus(vac.id, 'rejected')}>
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                            {vac.status !== 'pending' && (
+                              <div className="flex justify-end pr-2 text-muted-foreground"><ShieldCheck className="w-4 h-4"/></div>
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })
