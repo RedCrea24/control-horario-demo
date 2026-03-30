@@ -58,6 +58,34 @@ export default function TimeEntries() {
     toast({ title: "Fichaje finalizado", description: `Hora: ${timeStr}` });
   };
 
+  const handleBreakStart = () => {
+    if (!activeEntry) return;
+    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const updated = (entries || []).map(e => 
+      e.id === activeEntry.id ? { 
+        ...e, 
+        breakStart: timeStr,
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Inicio Descanso', by: currentUser.id }]
+      } : e
+    );
+    setEntries(updated);
+    toast({ title: "Descanso iniciado", description: `Hora: ${timeStr}` });
+  };
+
+  const handleBreakEnd = () => {
+    if (!activeEntry) return;
+    const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const updated = (entries || []).map(e => 
+      e.id === activeEntry.id ? { 
+        ...e, 
+        breakEnd: timeStr,
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Fin Descanso', by: currentUser.id }]
+      } : e
+    );
+    setEntries(updated);
+    toast({ title: "Descanso finalizado", description: `Hora: ${timeStr}` });
+  };
+
   const signEntry = (id: string) => {
     const updated = entries.map(e => 
       e.id === id ? { 
@@ -142,8 +170,17 @@ export default function TimeEntries() {
                   <Play className="w-5 h-5 mr-2" fill="currentColor" /> Entrada
                 </Button>
               ) : (
-                <div className="flex gap-2">
-                  <Button size="lg" variant="destructive" className="flex-1 h-16" onClick={handleClockOut}>
+                <div className="flex flex-col gap-2 w-full">
+                  {!activeEntry.breakStart ? (
+                    <Button size="lg" variant="outline" className="w-full h-12 text-orange-600 border-orange-200 hover:bg-orange-50" onClick={handleBreakStart}>
+                      <Pause className="w-5 h-5 mr-2" fill="currentColor" /> Iniciar Descanso
+                    </Button>
+                  ) : !activeEntry.breakEnd ? (
+                    <Button size="lg" variant="outline" className="w-full h-12 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={handleBreakEnd}>
+                      <Play className="w-5 h-5 mr-2" fill="currentColor" /> Finalizar Descanso
+                    </Button>
+                  ) : null}
+                  <Button size="lg" variant="destructive" className="w-full h-16 text-lg mt-2" onClick={handleClockOut}>
                     <Square className="w-5 h-5 mr-2" fill="currentColor" /> Salida
                   </Button>
                 </div>
@@ -186,6 +223,9 @@ export default function TimeEntries() {
                       {canValidate && <TableCell>{emp?.name}</TableCell>}
                       <TableCell>
                         <div className="text-sm">{entry.clockIn} - {entry.clockOut || '...'}</div>
+                        {entry.breakStart && (
+                          <div className="text-xs text-orange-600">Descanso: {entry.breakStart} - {entry.breakEnd || '...'}</div>
+                        )}
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-muted-foreground">{getDuration(entry.clockIn, entry.clockOut)}</span>
                           {entry.clockOut && getExtraHours(entry.clockIn, entry.clockOut, emp?.weeklyHours || 40) && (
@@ -234,9 +274,12 @@ export default function TimeEntries() {
         <DialogContent>
           <DialogHeader><DialogTitle>Firma Digital de Fichaje</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Al firmar este documento, certificas que las horas registradas correspondientes a este fichaje son correctas y veraces según lo estipulado en la normativa laboral vigente.
-            </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>Pasos para firmar:</strong><br />
+                1. Revisa que las horas de entrada, salida y descansos sean correctas.<br />
+                2. Si estás de acuerdo, haz clic en "Confirmar Firma" abajo.<br />
+                3. Esto añadirá una marca de tiempo digital equivalente a tu firma física.
+              </p>
             <div className="p-4 bg-secondary/30 rounded-lg text-center font-mono border-2 border-dashed border-muted-foreground/30">
               <div className="font-handwriting text-2xl text-primary">{currentUser.name}</div>
               <div className="text-xs text-muted-foreground mt-2">{new Date().toLocaleString()}</div>

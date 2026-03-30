@@ -6,6 +6,8 @@ export interface Company {
   name: string;
   nif: string;
   address: string;
+  phone?: string;
+  email?: string;
   logo?: string; // base64
   workingHoursPerWeek: number;
 }
@@ -43,6 +45,8 @@ export interface TimeEntry {
   employeeId: string;
   date: string; // YYYY-MM-DD
   clockIn: string; // HH:mm
+  breakStart?: string; // HH:mm
+  breakEnd?: string; // HH:mm
   clockOut?: string; // HH:mm
   type: 'regular' | 'extra' | 'absence';
   notes?: string;

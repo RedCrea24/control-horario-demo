@@ -183,6 +183,31 @@ export default function Settings() {
                 onChange={handleChange}
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Teléfono</Label>
+                <Input 
+                  id="phone" 
+                  name="phone" 
+                  type="tel"
+                  placeholder="+34 900 000 000"
+                  value={formData.phone || ''} 
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email de Contacto</Label>
+                <Input 
+                  id="email" 
+                  name="email" 
+                  type="email"
+                  placeholder="contacto@empresa.com"
+                  value={formData.email || ''} 
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 

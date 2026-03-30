@@ -148,12 +148,17 @@ export default function Reports() {
 
         <div className="pt-20 grid grid-cols-2 gap-16 text-center">
           <div>
-            <div className="border-t border-black w-64 mx-auto pt-2 font-bold">Firma y Sello de la Empresa</div>
+            <div className="border-t border-black w-64 mx-auto pt-2 font-bold mb-4">Firma y Sello de la Empresa</div>
+            {activeCompany?.logo && (
+              <img src={activeCompany.logo} alt="Logo Sello" className="w-24 h-24 object-contain grayscale print:grayscale-0 mx-auto opacity-50 mb-2" />
+            )}
             <p className="text-xs text-gray-500 mt-2">D/Dña. ___________________________</p>
+            <p className="text-xs text-gray-500 mt-1">Fecha: {new Date().toLocaleDateString('es-ES')}</p>
           </div>
           <div>
-            <div className="border-t border-black w-64 mx-auto pt-2 font-bold">Firma de la persona trabajadora</div>
-            <p className="text-xs text-gray-500 mt-2">Conforme con el registro de horas</p>
+            <div className="border-t border-black w-64 mx-auto pt-2 font-bold mb-4">Firma de la persona trabajadora</div>
+            <p className="text-xs text-gray-500 mt-16">Conforme con el registro de horas</p>
+            <p className="text-xs text-gray-500 mt-1">Fecha: {new Date().toLocaleDateString('es-ES')}</p>
           </div>
         </div>
       </div>
