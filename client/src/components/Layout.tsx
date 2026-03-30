@@ -177,11 +177,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="allow-demo-click">
                 <Menu className="w-6 h-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
+            <SheetContent side="left" className="w-64 p-0 allow-demo-click">
               <div className="p-4 border-b flex flex-col gap-4">
                 <div className="flex items-center gap-2 text-primary font-bold text-lg leading-tight">
                   <Clock className="w-6 h-6 shrink-0" />
