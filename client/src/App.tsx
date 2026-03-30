@@ -13,6 +13,7 @@ import Vacations from "@/pages/Vacations";
 import Settings from "@/pages/Settings";
 import Reports from "@/pages/Reports";
 import ControlPro from "@/pages/ControlPro";
+import MoreInfo from "@/pages/MoreInfo";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/informes" component={Reports}/>
         <Route path="/configuracion" component={Settings}/>
         <Route path="/control-pro" component={ControlPro}/>
+        <Route path="/mas-info" component={MoreInfo}/>
         <Route component={NotFound} />
       </Switch>
     </Layout>

@@ -9,7 +9,8 @@ import {
   FileBarChart,
   SlidersHorizontal,
   Menu,
-  ShieldCheck
+  ShieldCheck,
+  Info
 } from "lucide-react";
 import { useActiveCompany, useCurrentUser } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/empleados", label: "Empleados", icon: Users, show: isSupervisor },
     { href: "/informes", label: "Informes", icon: FileBarChart, show: isSupervisor },
     { href: "/configuracion", label: "Empresa", icon: Settings, show: isAdmin },
+    { href: "/mas-info", label: "Más Info", icon: Info, show: true },
   ].filter(item => item.show);
 
   const NavLinks = () => (
