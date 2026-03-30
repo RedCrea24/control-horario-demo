@@ -221,9 +221,14 @@ export default function MoreInfo() {
           </div>
           
           <div className="pt-4">
-            <div className="inline-flex items-center gap-2 bg-white text-primary px-6 py-3 rounded-full font-bold text-lg shadow-lg hover:bg-gray-100 transition-colors cursor-pointer">
+            <a 
+              href="https://wa.me/34610056859?text=Estaria%20interesado%20en%20esta%20App%2C%20me%20pueden%20informar%2C%20Gracias" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-white text-primary px-6 py-3 rounded-full font-bold text-lg shadow-lg hover:bg-gray-100 transition-colors cursor-pointer"
+            >
               🔥 Contacta ahora y solicita tu demo
-            </div>
+            </a>
           </div>
         </CardContent>
       </Card>
