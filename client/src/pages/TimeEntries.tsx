@@ -38,7 +38,7 @@ export default function TimeEntries() {
       clockIn: timeStr,
       type: 'regular',
       status: 'pending',
-      history: [{ timestamp: new Date().toISOString(), action: 'Clock In', by: currentUser.id }]
+      history: [{ timestamp: new Date().toISOString(), action: 'Entrada', by: currentUser.id }]
     };
     setEntries([newEntry, ...(entries || [])]);
     toast({ title: "Fichaje iniciado", description: `Hora: ${timeStr}` });
@@ -51,7 +51,7 @@ export default function TimeEntries() {
       e.id === activeEntry.id ? { 
         ...e, 
         clockOut: timeStr,
-        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Clock Out', by: currentUser.id }]
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Salida', by: currentUser.id }]
       } : e
     );
     setEntries(updated);
@@ -63,7 +63,7 @@ export default function TimeEntries() {
       e.id === id ? { 
         ...e, 
         employeeSignature: `Firmado por ${currentUser.name} el ${new Date().toLocaleString()}`,
-        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Signed', by: currentUser.id }]
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Firma', by: currentUser.id }]
       } : e
     );
     setEntries(updated);
@@ -77,7 +77,7 @@ export default function TimeEntries() {
         ...e, 
         status: 'validated' as const,
         validatedBy: currentUser.id,
-        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Validated', by: currentUser.id }]
+        history: [...(e.history||[]), { timestamp: new Date().toISOString(), action: 'Validación', by: currentUser.id }]
       } : e
     );
     setEntries(updated);
@@ -93,6 +93,25 @@ export default function TimeEntries() {
     const h = Math.floor(diffMins / 60);
     const m = diffMins % 60;
     return `${h}h ${m}m`;
+  };
+
+  const getExtraHours = (inTime: string, outTime?: string, weeklyHours: number = 40) => {
+    if (!outTime) return null;
+    const [inH, inM] = inTime.split(':').map(Number);
+    const [outH, outM] = outTime.split(':').map(Number);
+    let diffMins = (outH * 60 + outM) - (inH * 60 + inM);
+    if (diffMins < 0) diffMins += 24 * 60;
+    
+    // Asumimos 5 días laborales para calcular las horas diarias estimadas
+    const expectedDailyMins = (weeklyHours / 5) * 60;
+    const extraMins = diffMins - expectedDailyMins;
+    
+    if (extraMins > 0) {
+      const h = Math.floor(extraMins / 60);
+      const m = Math.floor(extraMins % 60);
+      return `+${h}h ${m}m extra`;
+    }
+    return null;
   };
 
   const visibleEntries = (entries || [])
@@ -167,7 +186,14 @@ export default function TimeEntries() {
                       {canValidate && <TableCell>{emp?.name}</TableCell>}
                       <TableCell>
                         <div className="text-sm">{entry.clockIn} - {entry.clockOut || '...'}</div>
-                        <div className="text-xs text-muted-foreground">{getDuration(entry.clockIn, entry.clockOut)}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground">{getDuration(entry.clockIn, entry.clockOut)}</span>
+                          {entry.clockOut && getExtraHours(entry.clockIn, entry.clockOut, emp?.weeklyHours || 40) && (
+                            <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200 py-0 h-4">
+                              {getExtraHours(entry.clockIn, entry.clockOut, emp?.weeklyHours || 40)}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {entry.status === 'validated' ? 

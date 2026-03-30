@@ -48,11 +48,42 @@ export default function Employees() {
   const [newEmp, setNewEmp] = useState<Partial<Employee>>({
     name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40
   });
+  
+  const [scheduleType, setScheduleType] = useState<'company' | 'custom'>('company');
+  const [customSchedule, setCustomSchedule] = useState<Partial<Schedule>>({
+    monday: '09:00-14:00,15:00-18:00',
+    tuesday: '09:00-14:00,15:00-18:00',
+    wednesday: '09:00-14:00,15:00-18:00',
+    thursday: '09:00-14:00,15:00-18:00',
+    friday: '08:00-15:00',
+    saturday: '',
+    sunday: ''
+  });
 
   const isSupervisor = currentUser?.systemRole === 'admin' || currentUser?.systemRole === 'supervisor';
 
   const handleAdd = () => {
     if (!activeCompany) return;
+    
+    let assignedScheduleId = schedules?.find(s => s.companyId === activeCompany.id)?.id || '';
+    
+    if (scheduleType === 'custom') {
+      const newSchedule: Schedule = {
+        id: 's' + Date.now(),
+        name: `Horario Personalizado - ${newEmp.name}`,
+        companyId: activeCompany.id,
+        monday: customSchedule.monday || '',
+        tuesday: customSchedule.tuesday || '',
+        wednesday: customSchedule.wednesday || '',
+        thursday: customSchedule.thursday || '',
+        friday: customSchedule.friday || '',
+        saturday: customSchedule.saturday || '',
+        sunday: customSchedule.sunday || ''
+      };
+      setSchedules([...schedules, newSchedule]);
+      assignedScheduleId = newSchedule.id;
+    }
+    
     const emp: Employee = {
       id: 'e' + Date.now(),
       companyId: activeCompany.id,
@@ -62,13 +93,14 @@ export default function Employees() {
       department: newEmp.department || '',
       systemRole: newEmp.systemRole as any || 'employee',
       weeklyHours: newEmp.weeklyHours || 40,
-      scheduleId: schedules?.filter(s => s.companyId === activeCompany.id)[0]?.id || '',
+      scheduleId: assignedScheduleId,
       joinDate: newEmp.joinDate || '',
       active: true,
     };
     setEmployees([...(employees || []), emp]);
     setIsDialogOpen(false);
     setNewEmp({name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40});
+    setScheduleType('company');
     toast({ title: "Empleado añadido", description: "El empleado ha sido registrado correctamente." });
   };
 
@@ -141,6 +173,37 @@ export default function Employees() {
                   <Label>Fecha de Incorporación</Label>
                   <Input type="date" value={newEmp.joinDate} onChange={e => setNewEmp({...newEmp, joinDate: e.target.value})} />
                 </div>
+                
+                <div className="space-y-3 pt-2 border-t">
+                  <Label className="text-base">Configuración de Horario</Label>
+                  <Select value={scheduleType} onValueChange={(v: 'company' | 'custom') => setScheduleType(v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="company">Horario principal de la empresa</SelectItem>
+                      <SelectItem value="custom">Horario personalizado para este empleado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {scheduleType === 'custom' && (
+                    <div className="grid grid-cols-[80px_1fr] gap-2 items-center bg-secondary/20 p-3 rounded-md text-sm mt-2">
+                      <Label className="text-xs">Lunes</Label>
+                      <Input value={customSchedule.monday} onChange={e => setCustomSchedule({...customSchedule, monday: e.target.value})} className="h-8 text-xs font-mono" />
+                      
+                      <Label className="text-xs">Martes</Label>
+                      <Input value={customSchedule.tuesday} onChange={e => setCustomSchedule({...customSchedule, tuesday: e.target.value})} className="h-8 text-xs font-mono" />
+                      
+                      <Label className="text-xs">Miércoles</Label>
+                      <Input value={customSchedule.wednesday} onChange={e => setCustomSchedule({...customSchedule, wednesday: e.target.value})} className="h-8 text-xs font-mono" />
+                      
+                      <Label className="text-xs">Jueves</Label>
+                      <Input value={customSchedule.thursday} onChange={e => setCustomSchedule({...customSchedule, thursday: e.target.value})} className="h-8 text-xs font-mono" />
+                      
+                      <Label className="text-xs">Viernes</Label>
+                      <Input value={customSchedule.friday} onChange={e => setCustomSchedule({...customSchedule, friday: e.target.value})} className="h-8 text-xs font-mono" />
+                    </div>
+                  )}
+                </div>
+
                 <Button onClick={handleAdd} className="w-full mt-4">Guardar Empleado</Button>
               </div>
             </DialogContent>

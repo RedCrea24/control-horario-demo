@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useState } from "react";
 import { 
   LayoutDashboard, 
   Users, 
@@ -28,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { activeCompany, setActiveCompanyId, companies } = useActiveCompany();
   const { currentUser, setCurrentUserId, employees } = useCurrentUser();
 
@@ -49,23 +51,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
         const Icon = item.icon;
         const isActive = location === item.href;
         return (
-          <Link key={item.href} href={item.href}>
-            <div
-              className={`flex items-center space-x-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
-                isActive
-                  ? "bg-primary text-primary-foreground font-medium"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </div>
-          </Link>
+          <div key={item.href} onClick={() => setSheetOpen(false)}>
+            <Link href={item.href}>
+              <div
+                className={`flex items-center space-x-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
+                  isActive
+                    ? "bg-primary text-primary-foreground font-medium"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </div>
+            </Link>
+          </div>
         );
       })}
       
       {isAdmin && (
-        <div className="pt-4 mt-4 border-t">
+        <div className="pt-4 mt-4 border-t" onClick={() => setSheetOpen(false)}>
           <Link href="/control-pro">
             <div
               className={`flex items-center space-x-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
@@ -74,8 +78,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent"
               }`}
             >
-              <SlidersHorizontal className="w-5 h-5" />
-              <span>Control Pro</span>
+              <SlidersHorizontal className="w-5 h-5 shrink-0" />
+              <span>Control Horario de Empresas Pro</span>
             </div>
           </Link>
         </div>
@@ -88,9 +92,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-card border-r shadow-sm">
         <div className="p-4 border-b flex flex-col gap-4">
-          <div className="flex items-center gap-2 text-primary font-bold text-xl tracking-tight">
-            <Clock className="w-6 h-6" />
-            <span>ControlPro</span>
+          <div className="flex items-center gap-2 text-primary font-bold text-lg leading-tight">
+            <Clock className="w-6 h-6 shrink-0" />
+            <span>Control Horario de Empresas Pro</span>
           </div>
           
           {isAdmin ? (
@@ -167,9 +171,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="md:hidden flex items-center justify-between p-4 bg-card border-b">
           <div className="flex items-center gap-2 text-primary font-bold text-lg">
             <Clock className="w-5 h-5" />
-            <span>ControlPro</span>
+            <span className="truncate">Control Horario de Empresas Pro</span>
           </div>
-          <Sheet>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="w-6 h-6" />
@@ -177,9 +181,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <div className="p-4 border-b flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-primary font-bold text-xl">
-                  <Clock className="w-6 h-6" />
-                  <span>ControlPro</span>
+                <div className="flex items-center gap-2 text-primary font-bold text-lg leading-tight">
+                  <Clock className="w-6 h-6 shrink-0" />
+                  <span>Control Horario de Empresas Pro</span>
                 </div>
               </div>
               <div className="px-3">

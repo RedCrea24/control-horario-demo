@@ -28,13 +28,45 @@ export default function ControlPro() {
   const [viewHistory, setViewHistory] = useState<TimeEntry['history']>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+
   // Security check
   if (currentUser?.systemRole !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center h-full p-12 text-center">
         <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
         <h2 className="text-2xl font-bold">Acceso Denegado</h2>
-        <p className="text-muted-foreground mt-2">El módulo Control Pro está reservado exclusivamente para administradores del sistema.</p>
+        <p className="text-muted-foreground mt-2">El módulo Control Horario de Empresas Pro está reservado exclusivamente para administradores del sistema.</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-12 text-center max-w-md mx-auto mt-20">
+        <ShieldAlert className="w-16 h-16 text-primary mb-4" />
+        <h2 className="text-2xl font-bold">Control Horario de Empresas Pro</h2>
+        <p className="text-muted-foreground mt-2 mb-6">Por motivos de seguridad, introduce la contraseña de administrador para acceder a este módulo avanzado.</p>
+        <div className="w-full flex gap-2">
+          <Input 
+            type="password" 
+            placeholder="Contraseña" 
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                if (password === 'admin' || password === 'admin123' || password === '1234') setIsAuthenticated(true);
+                else toast({ title: "Contraseña incorrecta", variant: "destructive" });
+              }
+            }}
+          />
+          <Button onClick={() => {
+            if (password === 'admin' || password === 'admin123' || password === '1234') setIsAuthenticated(true);
+            else toast({ title: "Contraseña incorrecta", variant: "destructive" });
+          }}>Entrar</Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-4">Nota de prototipo: Utiliza "admin" como contraseña.</p>
       </div>
     );
   }
@@ -89,7 +121,7 @@ export default function ControlPro() {
       <div className="flex justify-between items-center bg-primary/5 p-4 rounded-xl border border-primary/20">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6" /> Control Pro: Auditoría y Edición
+            <ShieldAlert className="w-6 h-6" /> Control Horario de Empresas Pro
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Todos los cambios realizados aquí quedan registrados en el log de auditoría legal.</p>
         </div>
@@ -199,7 +231,7 @@ export default function ControlPro() {
       {/* Edit Employee Dialog */}
       <Dialog open={!!editEmployee} onOpenChange={(open) => !open && setEditEmployee(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Control Pro: Editar Empleado</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Control Horario de Empresas Pro: Editar Empleado</DialogTitle></DialogHeader>
           {editEmployee && (
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2"><Label>Nombre</Label><Input value={editEmployee.name} onChange={e => setEditEmployee({...editEmployee, name: e.target.value})} /></div>
