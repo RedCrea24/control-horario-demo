@@ -208,7 +208,11 @@ export default function MoreInfo() {
           
           <div className="bg-primary-foreground/10 rounded-xl p-6 max-w-md mx-auto backdrop-blur-sm border border-primary-foreground/20">
             <p className="text-sm uppercase tracking-wider font-semibold text-primary-foreground/60 mb-4">Esta solución ha sido desarrollada por:</p>
-            <p className="text-2xl font-bold mb-6">RedCrea24.es</p>
+            <div className="flex justify-center mb-6">
+              <div className="w-32 h-32 bg-black rounded-full flex items-center justify-center p-3 overflow-hidden border-4 border-white/10 shadow-xl">
+                <img src="/src/assets/redcrea-logo.png" alt="RedCrea24 Logo" className="w-full h-full object-contain" />
+              </div>
+            </div>
             
             <div className="space-y-3">
               <a href="tel:610056859" className="flex items-center justify-center gap-3 text-lg font-medium hover:bg-primary-foreground/20 p-2 rounded-md transition-colors">

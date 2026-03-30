@@ -92,8 +92,8 @@ export function DemoOverlay() {
             <DialogTitle className="text-xl text-center">Versión de Demostración</DialogTitle>
           </DialogHeader>
           <div className="text-center space-y-4 py-4">
-            <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8" />
+            <div className="w-24 h-24 mx-auto mb-4 bg-black rounded-full flex items-center justify-center p-2 overflow-hidden border-2 border-primary/20 shadow-md">
+              <img src="/src/assets/redcrea-logo.png" alt="RedCrea24 Logo" className="w-full h-full object-contain" />
             </div>
             <div className="text-left space-y-3 bg-secondary/20 p-4 rounded-lg text-sm text-muted-foreground mb-4">
               <p className="font-bold text-primary text-base text-center mb-2">¡Bienvenido a la versión DEMO!</p>
