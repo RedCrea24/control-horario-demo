@@ -17,6 +17,7 @@ export interface Employee {
   companyId: string;
   name: string;
   email: string;
+  phone?: string;
   role: string; // Job title
   systemRole: 'admin' | 'supervisor' | 'employee'; // App access level
   department: string;

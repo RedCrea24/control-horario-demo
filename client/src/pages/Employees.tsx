@@ -46,7 +46,7 @@ export default function Employees() {
   );
 
   const [newEmp, setNewEmp] = useState<Partial<Employee>>({
-    name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40
+    name: '', email: '', phone: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40
   });
   
   const [scheduleType, setScheduleType] = useState<'company' | 'custom'>('company');
@@ -89,6 +89,7 @@ export default function Employees() {
       companyId: activeCompany.id,
       name: newEmp.name || 'Sin nombre',
       email: newEmp.email || '',
+      phone: newEmp.phone || '',
       role: newEmp.role || '',
       department: newEmp.department || '',
       systemRole: newEmp.systemRole as any || 'employee',
@@ -99,7 +100,7 @@ export default function Employees() {
     };
     setEmployees([...(employees || []), emp]);
     setIsDialogOpen(false);
-    setNewEmp({name: '', email: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40});
+    setNewEmp({name: '', email: '', phone: '', role: '', department: '', active: true, joinDate: new Date().toISOString().split('T')[0], systemRole: 'employee', weeklyHours: 40});
     setScheduleType('company');
     toast({ title: "Empleado añadido", description: "El empleado ha sido registrado correctamente." });
   };
@@ -141,9 +142,15 @@ export default function Employees() {
                   <Label>Nombre Completo</Label>
                   <Input value={newEmp.name} onChange={e => setNewEmp({...newEmp, name: e.target.value})} placeholder="Ej. Ana García" />
                 </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input type="email" value={newEmp.email} onChange={e => setNewEmp({...newEmp, email: e.target.value})} placeholder="ana@empresa.com" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input type="email" value={newEmp.email} onChange={e => setNewEmp({...newEmp, email: e.target.value})} placeholder="ana@empresa.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Teléfono</Label>
+                    <Input type="tel" value={newEmp.phone || ''} onChange={e => setNewEmp({...newEmp, phone: e.target.value})} placeholder="+34 600 000 000" />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
