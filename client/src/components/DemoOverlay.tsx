@@ -16,6 +16,14 @@ export function DemoOverlay() {
     };
   }, []);
 
+  // Show modal automatically when entering demo mode
+  useEffect(() => {
+    if (isDemo && !sessionStorage.getItem('demoWelcomeShown')) {
+      setShowModal(true);
+      sessionStorage.setItem('demoWelcomeShown', 'true');
+    }
+  }, [isDemo]);
+
   useEffect(() => {
     if (!isDemo) return;
 
@@ -87,11 +95,20 @@ export function DemoOverlay() {
             <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8" />
             </div>
-            <p className="text-muted-foreground">
-              Estás visualizando una versión de demostración. Las funcionalidades de interacción, añadir, editar o eliminar datos están deshabilitadas.
-            </p>
+            <div className="text-left space-y-3 bg-secondary/20 p-4 rounded-lg text-sm text-muted-foreground mb-4">
+              <p className="font-bold text-primary text-base text-center mb-2">¡Bienvenido a la versión DEMO!</p>
+              <p>Esta es una versión de prueba interactiva para que conozcas la herramienta. Para explorarla, sigue estos pasos:</p>
+              <ul className="list-decimal pl-5 space-y-1">
+                <li>Usa el <strong>menú lateral</strong> para moverte por las diferentes secciones (Dashboard, Fichajes, Empleados, etc.).</li>
+                <li>Explora cómo se visualizan los datos, el panel de control y las tablas.</li>
+                <li>La versión completa te permitirá crear usuarios, fichar, descargar informes y gestionar tu empresa.</li>
+              </ul>
+              <p className="font-medium text-destructive mt-3 text-center border-t pt-2 border-destructive/10">
+                ⚠️ Las funciones de guardar, editar o eliminar están bloqueadas en esta DEMO.
+              </p>
+            </div>
             <p className="font-medium">
-              Para obtener la aplicación funcional sin límites, contáctanos.
+              ¿Te gusta lo que ves? Obtén la aplicación funcional sin límites.
             </p>
             <div className="pt-4">
               <a 
