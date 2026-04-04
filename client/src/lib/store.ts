@@ -168,24 +168,43 @@ const MOCK_ENTRIES: TimeEntry[] = [
 
 const MOCK_VACATIONS: Vacation[] = [];
 
+const DEMO_PREFIX = "demo:";
+
+function getScopedPrefix() {
+  if (typeof window === "undefined") return "";
+  return window.location.pathname.startsWith("/demo-app") ? DEMO_PREFIX : "";
+}
+
+function prefixedKey(key: string, prefix = getScopedPrefix()) {
+  return `${prefix}${key}`;
+}
+
+function initStoreForPrefix(prefix: string) {
+  const companiesKey = prefixedKey("companies", prefix);
+  if (!localStorage.getItem(companiesKey)) {
+    localStorage.setItem(companiesKey, JSON.stringify(MOCK_COMPANIES));
+    localStorage.setItem(prefixedKey("employees", prefix), JSON.stringify(MOCK_EMPLOYEES));
+    localStorage.setItem(prefixedKey("schedules", prefix), JSON.stringify(MOCK_SCHEDULES));
+    localStorage.setItem(prefixedKey("entries", prefix), JSON.stringify(MOCK_ENTRIES));
+    localStorage.setItem(prefixedKey("vacations", prefix), JSON.stringify(MOCK_VACATIONS));
+    localStorage.setItem(prefixedKey("activeCompanyId", prefix), JSON.stringify("c1"));
+    // Set default logged in user to admin for testing
+    localStorage.setItem(prefixedKey("currentUserId", prefix), JSON.stringify("e2"));
+  }
+}
+
 // Helper to initialize LocalStorage if empty
 export function initStore() {
-  if (!localStorage.getItem('companies')) {
-    localStorage.setItem('companies', JSON.stringify(MOCK_COMPANIES));
-    localStorage.setItem('employees', JSON.stringify(MOCK_EMPLOYEES));
-    localStorage.setItem('schedules', JSON.stringify(MOCK_SCHEDULES));
-    localStorage.setItem('entries', JSON.stringify(MOCK_ENTRIES));
-    localStorage.setItem('vacations', JSON.stringify(MOCK_VACATIONS));
-    localStorage.setItem('activeCompanyId', JSON.stringify('c1'));
-    // Set default logged in user to admin for testing
-    localStorage.setItem('currentUserId', JSON.stringify('e2'));
-  }
+  initStoreForPrefix("");
+  initStoreForPrefix(DEMO_PREFIX);
 }
 
 // React Hooks for Store
 export function useStore<T>(key: string): [T, (data: T) => void] {
+  const storageKey = prefixedKey(key);
+
   const [data, setDataState] = useState<T>(() => {
-    const stored = localStorage.getItem(key);
+    const stored = localStorage.getItem(storageKey);
     if (!stored) return null;
     try {
       return JSON.parse(stored);
@@ -195,14 +214,14 @@ export function useStore<T>(key: string): [T, (data: T) => void] {
   });
 
   const setData = (newData: T) => {
-    localStorage.setItem(key, JSON.stringify(newData));
+    localStorage.setItem(storageKey, JSON.stringify(newData));
     setDataState(newData);
     window.dispatchEvent(new Event('store-changed'));
   };
 
   useEffect(() => {
     const handleStorage = () => {
-      const stored = localStorage.getItem(key);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         try {
           setDataState(JSON.parse(stored));
@@ -218,7 +237,7 @@ export function useStore<T>(key: string): [T, (data: T) => void] {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('store-changed', handleStorage);
     };
-  }, [key]);
+  }, [storageKey]);
 
   return [data, setData];
 }

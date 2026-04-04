@@ -1,0 +1,2 @@
+Cliente,Plan,Pago verificado,Factura enviada,Formulario completo,Empresa creada,Admin creado,Plan asignado,Config inicial,Pruebas OK,Credenciales enviadas,Onboarding (fecha),Estado final,Observaciones,Progreso,Urgente
+,,No,No,No,No,No,No,No,No,No,,=SI(CONTAR.SI(C2:K2;"No")>0;"Pendiente";SI(L2="";"Lista para agendar";"Activa")),,=CONTAR.SI(C2:K2;"Sí")/CONTARA(C2:K2),=SI(Y(C2="Sí";D2="Sí";E2="Sí";F2="Sí";G2="Sí";H2="Sí";I2="Sí";J2="Sí";K2="Sí";L2="");"URGENTE: AGENDAR ONBOARDING";"")

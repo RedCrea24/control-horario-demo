@@ -2,11 +2,15 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Lock, MessageCircle } from "lucide-react";
 
-export function DemoOverlay() {
+export function DemoOverlay({ forceDemo = false }: { forceDemo?: boolean }) {
   const [showModal, setShowModal] = useState(false);
-  const [isDemo, setIsDemo] = useState(() => localStorage.getItem('demoMode') === 'true');
+  const [isDemo, setIsDemo] = useState(() => forceDemo || localStorage.getItem('demoMode') === 'true');
 
   useEffect(() => {
+    if (forceDemo) {
+      setIsDemo(true);
+      return;
+    }
     const handleStorage = () => setIsDemo(localStorage.getItem('demoMode') === 'true');
     window.addEventListener('storage', handleStorage);
     window.addEventListener('demo-mode-changed', handleStorage);
@@ -14,7 +18,7 @@ export function DemoOverlay() {
       window.removeEventListener('storage', handleStorage);
       window.removeEventListener('demo-mode-changed', handleStorage);
     };
-  }, []);
+  }, [forceDemo]);
 
   // Show modal automatically when entering demo mode
   useEffect(() => {
@@ -30,7 +34,7 @@ export function DemoOverlay() {
     const handleInteraction = (e: Event) => {
       const target = e.target as HTMLElement;
       
-      const isAllowed = target.closest('a[href^="http"], .allow-demo-click, .lucide-menu');
+      const isAllowed = target.closest('a[href*="paypal.com"], a[href^="http"], .allow-demo-click, .lucide-menu');
       // Treat navigation links as allowed (wouter links inside the app)
       const isInternalLink = target.closest('a[href^="/"]');
       

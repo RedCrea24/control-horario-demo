@@ -10,7 +10,9 @@ import {
   SlidersHorizontal,
   Menu,
   ShieldCheck,
-  Info
+  Info,
+  CreditCard,
+  CheckSquare
 } from "lucide-react";
 import { useActiveCompany, useCurrentUser } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -28,23 +30,27 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children, basePath = "" }: { children: React.ReactNode; basePath?: string }) {
   const [location] = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { activeCompany, setActiveCompanyId, companies } = useActiveCompany();
   const { currentUser, setCurrentUserId, employees } = useCurrentUser();
 
+  const withBasePath = (path: string) => `${basePath}${path}`;
+
   const isAdmin = currentUser?.systemRole === 'admin';
   const isSupervisor = currentUser?.systemRole === 'supervisor' || isAdmin;
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard, show: true },
-    { href: "/fichajes", label: "Fichajes", icon: Clock, show: true },
-    { href: "/vacaciones", label: "Ausencias", icon: CalendarDays, show: true },
-    { href: "/empleados", label: "Empleados", icon: Users, show: isSupervisor },
-    { href: "/informes", label: "Informes", icon: FileBarChart, show: isSupervisor },
-    { href: "/configuracion", label: "Empresa", icon: Settings, show: isAdmin },
-    { href: "/mas-info", label: "Más Info", icon: Info, show: true },
+    { href: withBasePath("/"), label: "Dashboard", icon: LayoutDashboard, show: true },
+    { href: withBasePath("/fichajes"), label: "Fichajes", icon: Clock, show: true },
+    { href: withBasePath("/vacaciones"), label: "Ausencias", icon: CalendarDays, show: true },
+    { href: withBasePath("/empleados"), label: "Empleados", icon: Users, show: isSupervisor },
+    { href: withBasePath("/informes"), label: "Informes", icon: FileBarChart, show: isSupervisor },
+    { href: withBasePath("/configuracion"), label: "Empresa", icon: Settings, show: isAdmin },
+    { href: withBasePath("/pasos"), label: "Cómo Comprar", icon: CheckSquare, show: true },
+    { href: withBasePath("/precios"), label: "Precios", icon: CreditCard, show: true },
+    { href: withBasePath("/mas-info"), label: "Más Info", icon: Info, show: true },
   ].filter(item => item.show);
 
   const NavLinks = () => (
@@ -72,10 +78,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       
       {isAdmin && (
         <div className="pt-4 mt-4 border-t" onClick={() => setSheetOpen(false)}>
-          <Link href="/control-pro">
+          <Link href={withBasePath("/control-pro")}>
             <div
               className={`flex items-center space-x-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${
-                location === "/control-pro"
+                location === withBasePath("/control-pro")
                   ? "bg-primary/10 text-primary font-medium border border-primary/20"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent"
               }`}
