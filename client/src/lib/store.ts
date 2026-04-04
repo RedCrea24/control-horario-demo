@@ -68,6 +68,16 @@ export interface Vacation {
   history?: { timestamp: string; action: string; by: string }[];
 }
 
+export interface WorkspaceSeed {
+  companies: Company[];
+  employees: Employee[];
+  schedules: Schedule[];
+  entries: TimeEntry[];
+  vacations: Vacation[];
+  activeCompanyId: string;
+  currentUserId: string;
+}
+
 // Initial Mock Data
 const MOCK_COMPANIES: Company[] = [
   {
@@ -197,6 +207,17 @@ function initStoreForPrefix(prefix: string) {
 export function initStore() {
   initStoreForPrefix("");
   initStoreForPrefix(DEMO_PREFIX);
+}
+
+export function applyWorkspaceSeed(seed: WorkspaceSeed) {
+  localStorage.setItem("companies", JSON.stringify(seed.companies));
+  localStorage.setItem("employees", JSON.stringify(seed.employees));
+  localStorage.setItem("schedules", JSON.stringify(seed.schedules));
+  localStorage.setItem("entries", JSON.stringify(seed.entries));
+  localStorage.setItem("vacations", JSON.stringify(seed.vacations));
+  localStorage.setItem("activeCompanyId", JSON.stringify(seed.activeCompanyId));
+  localStorage.setItem("currentUserId", JSON.stringify(seed.currentUserId));
+  window.dispatchEvent(new Event("store-changed"));
 }
 
 // React Hooks for Store

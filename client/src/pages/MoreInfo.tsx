@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { createPaypalCheckoutUrl } from "@/lib/paypal";
+import { SubscriptionCheckoutButtons } from "@/components/SubscriptionCheckoutButtons";
 
 export default function MoreInfo() {
   const plans = [
@@ -40,10 +41,8 @@ export default function MoreInfo() {
         { name: "Gestión de vacaciones", included: true },
         { name: "Análisis avanzado", included: false },
       ],
-      buttonText: "Comprar con PayPal",
       popular: true,
-      href: createPaypalCheckoutUrl("Profesional", "19.00"),
-      external: true,
+      paypalHref: createPaypalCheckoutUrl("Profesional", "19.00"),
     },
     {
       name: "Empresarial",
@@ -59,10 +58,8 @@ export default function MoreInfo() {
         { name: "Gestión de vacaciones", included: true },
         { name: "Análisis avanzado", included: true },
       ],
-      buttonText: "Comprar con PayPal",
       popular: false,
-      href: createPaypalCheckoutUrl("Empresarial", "49.00"),
-      external: true,
+      paypalHref: createPaypalCheckoutUrl("Empresarial", "49.00"),
     },
   ];
 
@@ -320,12 +317,13 @@ export default function MoreInfo() {
                 </ul>
               </CardContent>
               <CardFooter>
-                {plan.external ? (
-                  <Button asChild className="w-full allow-demo-click" variant={plan.popular ? 'default' : 'outline'}>
-                    <a href={plan.href} target="_blank" rel="noopener noreferrer" className="allow-demo-click">
-                      {plan.buttonText}
-                    </a>
-                  </Button>
+                {"paypalHref" in plan ? (
+                  <SubscriptionCheckoutButtons
+                    planName={plan.name}
+                    paypalHref={plan.paypalHref}
+                    returnPath="/mas-info"
+                    primaryVariant={plan.popular ? "default" : "outline"}
+                  />
                 ) : (
                   <Button asChild className="w-full" variant={plan.popular ? 'default' : 'outline'}>
                     <Link href={plan.href}>{plan.buttonText}</Link>
@@ -341,7 +339,7 @@ export default function MoreInfo() {
           <div className="flex justify-center items-center space-x-8">
             <div className="flex items-center space-x-2">
               <span className="text-2xl">💳</span>
-              <span>Tarjeta de Crédito</span>
+              <span>Stripe y Tarjeta</span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-2xl">🅿️</span>
@@ -353,7 +351,7 @@ export default function MoreInfo() {
             </div>
           </div>
           <p className="text-muted-foreground mt-4">
-            Todas las transacciones son seguras y protegidas. Facturación mensual automática.
+            Puedes suscribirte con Stripe o PayPal. Todas las transacciones son seguras y protegidas.
           </p>
         </div>
       </div>

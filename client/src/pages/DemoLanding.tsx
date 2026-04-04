@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, PlayCircle, CreditCard, ShieldCheck } from "lucide-react";
+import { CheckCircle2, PlayCircle, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { createPaypalCheckoutUrl } from "@/lib/paypal";
+import { SubscriptionCheckoutButtons } from "@/components/SubscriptionCheckoutButtons";
 
 export default function DemoLanding() {
   const professionalUrl = createPaypalCheckoutUrl("Profesional", "19.00");
@@ -21,7 +22,7 @@ export default function DemoLanding() {
           </h1>
           <p className="mt-4 text-lg md:text-xl text-slate-600">
             Muestra esta demo a tus clientes sin mezclarla con la aplicación principal.
-            Cuando estén listos, compran al instante con PayPal.
+            Cuando estén listos, compran al instante con Stripe o PayPal.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
@@ -31,12 +32,14 @@ export default function DemoLanding() {
                 Ver Demo Interactiva
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
-              <a href={professionalUrl} target="_blank" rel="noopener noreferrer">
-                <CreditCard className="w-5 h-5 mr-2" />
-                Comprar Plan Profesional
-              </a>
-            </Button>
+            <div className="w-full max-w-sm">
+              <SubscriptionCheckoutButtons
+                planName="Profesional"
+                paypalHref={professionalUrl}
+                returnPath="/demo"
+                primaryVariant="outline"
+              />
+            </div>
           </div>
         </div>
 
@@ -52,26 +55,12 @@ export default function DemoLanding() {
 
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader>
-              <CardTitle>Compra Directa con PayPal</CardTitle>
+              <CardTitle>Compra Directa con Stripe o PayPal</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600 space-y-3">
-              <a
-                href={professionalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-blue-700 hover:underline font-semibold"
-              >
-                Plan Profesional 19 EUR/mes
-              </a>
-              <br />
-              <a
-                href={enterpriseUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-blue-700 hover:underline font-semibold"
-              >
-                Plan Empresarial 49 EUR/mes
-              </a>
+              <div className="font-semibold text-slate-800">Plan Profesional 19 EUR/mes</div>
+              <div className="font-semibold text-slate-800">Plan Empresarial 49 EUR/mes</div>
+              <p>Los clientes pueden pagar su suscripcion mensual en Stripe Checkout o continuar con PayPal.</p>
             </CardContent>
           </Card>
 

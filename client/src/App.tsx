@@ -17,6 +17,8 @@ import MoreInfo from "@/pages/MoreInfo";
 import Pricing from "@/pages/Pricing";
 import HowToBuy from "@/pages/HowToBuy";
 import DemoLanding from "@/pages/DemoLanding";
+import ActivateAccount from "@/pages/ActivateAccount";
+import Login from "@/pages/Login";
 import { DemoOverlay } from "@/components/DemoOverlay";
 
 function MainRouter() {
@@ -65,6 +67,8 @@ function DemoRouter() {
 function Router() {
   return (
     <Switch>
+      <Route path="/activar" component={ActivateAccount}/>
+      <Route path="/acceso" component={Login}/>
       <Route path="/demo" component={DemoLanding}/>
       <Route path="/demo-app" component={DemoRouter}/>
       <Route path="/demo-app/:rest*" component={DemoRouter}/>

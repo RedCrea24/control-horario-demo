@@ -28,7 +28,7 @@ export default function Employees() {
   const { currentUser } = useCurrentUser();
   const { activeCompany } = useActiveCompany();
   const [employees, setEmployees] = useStore<Employee[]>('employees');
-  const [schedules] = useStore<Schedule[]>('schedules');
+  const [schedules, setSchedules] = useStore<Schedule[]>('schedules');
   const [entries, setEntries] = useStore<TimeEntry[]>('entries');
   const [vacations, setVacations] = useStore<Vacation[]>('vacations');
   const { toast } = useToast();

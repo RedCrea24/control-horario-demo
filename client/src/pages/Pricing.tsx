@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X, Play } from "lucide-react";
 import { Link } from "wouter";
 import { createPaypalCheckoutUrl } from "@/lib/paypal";
+import { SubscriptionCheckoutButtons } from "@/components/SubscriptionCheckoutButtons";
 
 const plans = [
   {
@@ -39,10 +40,8 @@ const plans = [
       { name: "Gestión de vacaciones", included: true },
       { name: "Análisis avanzado", included: false },
     ],
-    buttonText: "Comprar con PayPal",
     popular: true,
-    href: createPaypalCheckoutUrl("Profesional", "19.00"),
-    external: true,
+    paypalHref: createPaypalCheckoutUrl("Profesional", "19.00"),
   },
   {
     name: "Empresarial",
@@ -58,10 +57,8 @@ const plans = [
       { name: "Gestión de vacaciones", included: true },
       { name: "Análisis avanzado", included: true },
     ],
-    buttonText: "Comprar con PayPal",
     popular: false,
-    href: createPaypalCheckoutUrl("Empresarial", "49.00"),
-    external: true,
+    paypalHref: createPaypalCheckoutUrl("Empresarial", "49.00"),
   },
 ];
 
@@ -121,12 +118,13 @@ export default function Pricing() {
               </ul>
             </CardContent>
             <CardFooter>
-              {plan.external ? (
-                <Button asChild className="w-full allow-demo-click" variant={plan.popular ? 'default' : 'outline'}>
-                  <a href={plan.href} target="_blank" rel="noopener noreferrer" className="allow-demo-click">
-                    {plan.buttonText}
-                  </a>
-                </Button>
+              {"paypalHref" in plan ? (
+                <SubscriptionCheckoutButtons
+                  planName={plan.name}
+                  paypalHref={plan.paypalHref}
+                  returnPath="/precios"
+                  primaryVariant={plan.popular ? "default" : "outline"}
+                />
               ) : (
                 <Button asChild className="w-full" variant={plan.popular ? 'default' : 'outline'}>
                   <Link href={plan.href}>{plan.buttonText}</Link>
@@ -142,7 +140,7 @@ export default function Pricing() {
         <div className="flex justify-center items-center space-x-8">
           <div className="flex items-center space-x-2">
             <span className="text-2xl">💳</span>
-            <span>Tarjeta de Crédito</span>
+            <span>Stripe y Tarjeta</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-2xl">🅿️</span>
@@ -154,7 +152,10 @@ export default function Pricing() {
           </div>
         </div>
         <p className="text-muted-foreground mt-4">
-          Todas las transacciones son seguras y protegidas. Facturación mensual automática.
+          Puedes suscribirte con Stripe o PayPal. Todas las transacciones son seguras y protegidas.
+        </p>
+        <p className="text-sm text-muted-foreground mt-3">
+          Si ya has comprado, puedes <Link href="/activar"><span className="text-primary cursor-pointer font-medium">activar tu cuenta</span></Link> o <Link href="/acceso"><span className="text-primary cursor-pointer font-medium">acceder aqui</span></Link>.
         </p>
       </div>
     </div>

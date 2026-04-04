@@ -25,7 +25,7 @@ export default function ControlPro() {
 
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const [editEntry, setEditEntry] = useState<TimeEntry | null>(null);
-  const [viewHistory, setViewHistory] = useState<TimeEntry['history']>(null);
+  const [viewHistory, setViewHistory] = useState<TimeEntry['history'] | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -275,8 +275,8 @@ export default function HowToBuy() {
             </a>
           </div>
 
-          <p className="text-sm text-primary-foreground/70 pt-4">
-            Sin tarjeta de crédito requerida. Sin compromisos.
+        <p className="text-sm text-primary-foreground/70 pt-4">
+            Tras la compra podras activar tu cuenta y entrar directamente a tu app funcional.
           </p>
         </CardContent>
       </Card>
