@@ -42,7 +42,7 @@ export function Layout({ children, basePath = "" }: { children: React.ReactNode;
   const isSupervisor = currentUser?.systemRole === 'supervisor' || isAdmin;
 
   const navItems = [
-    { href: withBasePath("/"), label: "Dashboard", icon: LayoutDashboard, show: true },
+    { href: withBasePath("/dashboard"), label: "Dashboard", icon: LayoutDashboard, show: true },
     { href: withBasePath("/fichajes"), label: "Fichajes", icon: Clock, show: true },
     { href: withBasePath("/vacaciones"), label: "Ausencias", icon: CalendarDays, show: true },
     { href: withBasePath("/empleados"), label: "Empleados", icon: Users, show: isSupervisor },

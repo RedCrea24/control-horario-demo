@@ -25,7 +25,8 @@ function MainRouter() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard}/>
+        <Route path="/" component={MoreInfo}/>
+        <Route path="/dashboard" component={Dashboard}/>
         <Route path="/empleados" component={Employees}/>
         <Route path="/fichajes" component={TimeEntries}/>
         <Route path="/vacaciones" component={Vacations}/>
@@ -67,6 +68,7 @@ function DemoRouter() {
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={DemoLanding}/>
       <Route path="/activar" component={ActivateAccount}/>
       <Route path="/acceso" component={Login}/>
       <Route path="/demo" component={DemoLanding}/>
